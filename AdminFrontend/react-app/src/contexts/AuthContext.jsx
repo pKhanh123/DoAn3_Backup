@@ -9,7 +9,6 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Khôi phục session từ localStorage/sessionStorage
     const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)
       || sessionStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)
     const savedUser = localStorage.getItem(STORAGE_KEYS.USER)
@@ -38,7 +37,7 @@ export function AuthProvider({ children }) {
     setIsAuthenticated(true)
   }
 
-  const logout = () => {
+  const _doLogout = () => {
     localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
     localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
     localStorage.removeItem(STORAGE_KEYS.USER)
@@ -48,6 +47,13 @@ export function AuthProvider({ children }) {
     sessionStorage.removeItem(STORAGE_KEYS.USER)
     setUser(null)
     setIsAuthenticated(false)
+    window.location.href = '/auth/login'
+  }
+
+  const logout = () => {
+    import('../api/authApi').then(({ default: authApi }) => {
+      authApi.logout().catch(() => {}).finally(() => _doLogout())
+    })
   }
 
   const updateUser = (userData) => {
