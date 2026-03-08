@@ -4,7 +4,7 @@
 Convert hệ thống AngularJS thành ReactJS (Vite), giữ nguyên backend ASP.NET Core tại `https://localhost:7033`, push từng stage lên GitHub `main` với commit timestamp chronological.
 
 ## Current Phase
-Phase 8 (Lecturer & Advisor Management) — vừa hoàn thành
+Phase 9 (Class & Subject Management) — đang code xong, chờ commit
 
 ## Completed Phases
 
@@ -18,6 +18,7 @@ Phase 8 (Lecturer & Advisor Management) — vừa hoàn thành
 | Stage 6 | User Management Pages (List, Create, Edit, Delete) | ✅ complete |
 | Stage 7 | Student Management Pages (List, Form, Import/Export) | ✅ complete |
 | Stage 8 | Lecturer & Advisor Management (CRUD, Subject Assignment) | ✅ complete |
+| Stage 9 | Class & Subject Management (Class CRUD, Admin Class CRUD, Subject CRUD, lookupApi) | ✅ hoàn thành |
 
 ## Phases
 
@@ -34,10 +35,11 @@ Phase 8 (Lecturer & Advisor Management) — vừa hoàn thành
 - [x] Admin: Advisor Assign Students (placeholder) ✅
 - [x] Commit với fake timestamp
 
-### Phase 9: Class & Subject Management
-- [ ] Admin: Class management (CRUD)
-- [ ] Admin: Subject management (CRUD)
-- [ ] Admin: Assign subjects to lecturers
+### Phase 9: Class & Subject Management ✅
+- [x] Class Management Page (CRUD, filter by subject/lecturer/academic year) ✅
+- [x] Administrative Class Page (CRUD, view students, remove student) ✅
+- [x] Subject Management Page (CRUD, filter by department) ✅
+- [x] lookupApi.js — shared dropdown data ✅
 - [ ] Commit với fake timestamp
 
 ### Phase 10: Attendance Management

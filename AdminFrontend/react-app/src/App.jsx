@@ -32,6 +32,7 @@ import RegistrationPeriodPage from './pages/admin/registration-periods/Registrat
 import SubjectPrerequisitePage from './pages/admin/subject-prerequisites/SubjectPrerequisitePage'
 import EnrollmentAdminPage from './pages/admin/enrollments/EnrollmentAdminPage'
 import AdvisorManagePage from './pages/admin/advisors/AdvisorManagePage'
+import SubjectListPage from './pages/admin/subjects/SubjectListPage'
 
 // Lecturer Pages
 import LecturerDashboardPage from './pages/lecturer/DashboardPage'
@@ -148,6 +149,7 @@ function App() {
         <Route path="advisors" element={<AdvisorManagePage />} />
         <Route path="classes" element={<ClassListPage />} />
         <Route path="admin-classes" element={<AdminClassListPage />} />
+        <Route path="subjects" element={<SubjectListPage />} />
         <Route path="rooms" element={<RoomListPage />} />
         <Route path="timetable" element={<AdminTimetablePage />} />
         <Route path="reports" element={<AdminReportPage />} />
