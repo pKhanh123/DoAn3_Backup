@@ -77,7 +77,7 @@ function ProtectedRoute({ children, allowedRoles }) {
   const { user, isAuthenticated } = useAuth()
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/auth/login" replace />
   }
 
   if (allowedRoles && !allowedRoles.includes(user?.role)) {
@@ -116,7 +116,7 @@ function RootRedirect() {
     case ROLES.STUDENT:
       return <Navigate to="/student/dashboard" replace />
     default:
-      return <Navigate to="/login" replace />
+      return <Navigate to="/auth/login" replace />
   }
 }
 
@@ -124,10 +124,10 @@ function App() {
   return (
     <Routes>
       {/* Public Routes */}
-      <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-      <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
-      <Route path="/verify-otp" element={<PublicRoute><VerifyOTPPage /></PublicRoute>} />
-      <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
+      <Route path="/auth/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+      <Route path="/auth/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
+      <Route path="/auth/verify-otp" element={<PublicRoute><VerifyOTPPage /></PublicRoute>} />
+      <Route path="/auth/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
 
       {/* Root Redirect */}
       <Route path="/" element={<RootRedirect />} />
