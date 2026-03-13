@@ -4,7 +4,7 @@
 Convert hệ thống AngularJS thành ReactJS (Vite), giữ nguyên backend ASP.NET Core tại `https://localhost:7033`, push từng stage lên GitHub `main` với commit timestamp chronological.
 
 ## Current Phase
-Phase 11 (Schedule & Room Management) — đang code xong, chờ commit
+Phase 12 (Reports & Export) — đang code xong, chờ commit
 
 ## Completed Phases
 
@@ -20,7 +20,8 @@ Phase 11 (Schedule & Room Management) — đang code xong, chờ commit
 | Stage 8 | Lecturer & Advisor Management (CRUD, Subject Assignment) | ✅ complete |
 | Stage 9 | Class & Subject Management (Class CRUD, Admin Class CRUD, Subject CRUD, lookupApi) | ✅ complete |
 | Stage 10 | Attendance Management (Lecturer take attendance, Student view attendance, APIs) | ✅ complete |
-| Stage 11 | Schedule & Room Management (Room CRUD, Timetable week grid, Schedule CRUD, check-conflicts) | ✅ hoàn thành |
+| Stage 11 | Schedule & Room Management (Room CRUD, Timetable week grid, Schedule CRUD, check-conflicts) | ✅ complete |
+| Stage 12 | Reports & Export (Admin/Lecturer/Advisor/Student reports, Excel export, recharts) | ✅ hoàn thành |
 
 ## Phases
 
@@ -37,11 +38,15 @@ Phase 11 (Schedule & Room Management) — đang code xong, chờ commit
 - [x] Admin: Timetable Management (week grid, CRUD sessions, check conflicts) ✅
 - [x] roomApi.js — room CRUD ✅
 - [x] scheduleApi.js — schedule CRUD + check-conflicts ✅
-- [ ] Commit với fake timestamp
+- [x] Commit với fake timestamp
 
-### Phase 12: Reports & Export
-- [ ] Export attendance report (Excel/PDF)
-- [ ] Dashboard charts cho Admin
+### Phase 12: Reports & Export ✅
+- [x] Admin: Report page (GPA pie, warnings doughnut, credit debt bar, top debt table) ✅
+- [x] Lecturer: Report page (class GPA + attendance pie charts) ✅
+- [x] Advisor: Report page (warnings bar, GPA pie, credit debt chart) ✅
+- [x] Student: Report page (GPA trend line, grade pie, credit progress) ✅
+- [x] Export Excel (client-side via xlsx + file-saver) ✅
+- [x] reportApi.js ✅
 - [ ] Commit với fake timestamp
 
 ## Key Decisions
