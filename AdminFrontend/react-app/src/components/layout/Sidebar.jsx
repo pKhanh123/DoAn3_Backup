@@ -28,6 +28,8 @@ const MENU_BY_ROLE = {
         { label: 'Giảng viên', icon: 'fas fa-chalkboard-teacher', path: '/admin/lecturers' },
         { label: 'Cố vấn học tập', icon: 'fas fa-user-friends', path: '/admin/advisors' },
         { label: 'Lớp học', icon: 'fas fa-layer-group', path: '/admin/classes' },
+        { label: 'Lớp hành chính', icon: 'fas fa-school', path: '/admin/admin-classes' },
+        { label: 'Môn học', icon: 'fas fa-book', path: '/admin/subjects' },
         { label: 'Phòng máy', icon: 'fas fa-desktop', path: '/admin/rooms' },
         { label: 'Năm học', icon: 'fas fa-calendar-alt', path: '/admin/school-years' },
         { label: 'Kỳ học', icon: 'fas fa-calendar-week', path: '/admin/academic-years' },
