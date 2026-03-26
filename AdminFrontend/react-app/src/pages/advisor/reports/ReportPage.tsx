@@ -12,18 +12,25 @@ import lookupApi from '../../../api/lookupApi'
 import adminClassApi from '../../../api/adminClassApi'
 import reportApi from '../../../api/reportApi'
 
-const GPA_COLORS = { excellent: '#28a745', good: '#0d6efd', average: '#ffc107', weak: '#dc3545' }
-const WARN_COLORS = { lowGpa: '#ffc107', poorAttendance: '#fd7e14', both: '#dc3545' }
+interface GpaItem { name: string; value: number; color: string }
+interface WarnItem { name: string; value: number; color: string }
+interface DebtItem { range: string; count: number }
+interface Filters { schoolYearId: string; semester: string; classId: string }
+
+const GPA_COLORS: Record<string, string> = { excellent: '#28a745', good: '#0d6efd', average: '#ffc107', weak: '#dc3545' }
+const WARN_COLORS: Record<string, string> = { lowGpa: '#ffc107', poorAttendance: '#fd7e14', both: '#dc3545' }
 
 export default function AdvisorReportPage() {
   const { user } = useAuth()
-  const [filters, setFilters] = useState({ schoolYearId: '', semester: '', classId: '' })
-  const advisorId = user?.advisorId || user?.relatedId
+  const [filters, setFilters] = useState<Filters>({ schoolYearId: '', semester: '', classId: '' })
+  const advisorId = (user as { advisorId?: number; relatedId?: number })?.advisorId || (user as { advisorId?: number; relatedId?: number })?.relatedId
 
   const { data: schoolYears = [] } = useQuery({
     queryKey: ['school-years-dropdown'], staleTime: 5 * 60 * 1000,
     queryFn: () => lookupApi.getSchoolYears().then(r => {
-      const d = r.data; return Array.isArray(d) ? d : (d?.data || d?.items || [])
+      const d = r.data as unknown as { data?: unknown[]; items?: unknown[] }
+      const arr = d?.data || d?.items
+      return Array.isArray(arr) ? arr : []
     }),
   })
 
@@ -31,52 +38,55 @@ export default function AdvisorReportPage() {
     queryKey: ['advisor-classes', advisorId],
     enabled: !!advisorId, staleTime: 5 * 60 * 1000,
     queryFn: () => adminClassApi.getAll({ advisorId, pageSize: 1000 }).then(r => {
-      const d = r.data
-      if (d?.data) return d.data
-      if (Array.isArray(d)) return d
-      return d?.data || d?.items || []
+      const d = r.data as unknown as { data?: unknown[]; items?: unknown[] }
+      const arr = d?.data || d?.items
+      if (Array.isArray(arr)) return arr
+      return []
     }),
   })
 
-  const { data: report = {}, isLoading } = useQuery({
+  const { data: report = {} as Record<string, unknown>, isLoading } = useQuery({
     queryKey: ['advisor-reports', filters],
     enabled: !!filters.classId, staleTime: 0,
     queryFn: () => {
-      const params = {}
+      const params: Record<string, string | number> = { classId: filters.classId }
       if (filters.schoolYearId) params.schoolYearId = filters.schoolYearId
       if (filters.semester) params.semester = filters.semester
-      return reportApi.getAdvisorReport(filters.classId, params).then(r => {
-        const d = r.data; return d?.data || d || {}
+      return reportApi.getAdvisorReport(params).then(r => {
+        return (r.data as unknown as Record<string, unknown>)?.data || r.data || {}
       })
     },
   })
 
-  const warnings = report.academicWarnings || {}
-  const gpaDist = report.gpaDistribution || {}
-  const creditDebt = report.creditDebtStats || {}
+  const warnings = (report['academicWarnings'] || report['warningStats'] || {}) as Record<string, number>
+  const gpaDist = (report['gpaDistribution'] as { excellent?: number; good?: number; average?: number; weak?: number }) || {}
+  const creditDebt = (report['creditDebtStats'] || report['creditDebt'] || []) as { range?: string; count?: number }[]
 
-  const gpaData = [
-    { name: 'Giỏi (≥3.5)', value: gpaDist.excellent, color: GPA_COLORS.excellent },
-    { name: 'Khá (3.0–3.49)', value: gpaDist.good, color: GPA_COLORS.good },
-    { name: 'TB (2.0–2.99)', value: gpaDist.average, color: GPA_COLORS.average },
-    { name: 'Yếu (<2.0)', value: gpaDist.weak, color: GPA_COLORS.weak },
+  const gpaData: GpaItem[] = [
+    { name: 'Giỏi (≥3.5)', value: gpaDist.excellent ?? 0, color: GPA_COLORS.excellent },
+    { name: 'Khá (3.0–3.49)', value: gpaDist.good ?? 0, color: GPA_COLORS.good },
+    { name: 'TB (2.0–2.99)', value: gpaDist.average ?? 0, color: GPA_COLORS.average },
+    { name: 'Yếu (<2.0)', value: gpaDist.weak ?? 0, color: GPA_COLORS.weak },
   ].filter(d => d.value > 0)
 
-  const warnData = [
+  const warnData: WarnItem[] = [
     { name: 'GPA thấp', value: warnings.lowGpa || 0, color: WARN_COLORS.lowGpa },
     { name: 'Điểm danh kém', value: warnings.poorAttendance || 0, color: WARN_COLORS.poorAttendance },
     { name: 'Cả hai', value: warnings.both || 0, color: WARN_COLORS.both },
   ].filter(d => d.value > 0)
 
-  const debtData = (creditDebt.byRange || []).map(r => ({ range: r.range, count: r.count }))
+  const debtData: DebtItem[] = (creditDebt as DebtItem[]).map(r => ({
+    range: r.range ?? '',
+    count: r.count ?? 0,
+  }))
 
   function handleExportExcel() {
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([
-      { 'Xếp loại': 'Giỏi', 'Số SV': gpaDist.excellent },
-      { 'Xếp loại': 'Khá', 'Số SV': gpaDist.good },
-      { 'Xếp loại': 'Trung bình', 'Số SV': gpaDist.average },
-      { 'Xếp loại': 'Yếu', 'Số SV': gpaDist.weak },
+      { 'Xếp loại': 'Giỏi', 'Số SV': gpaDist.excellent ?? 0 },
+      { 'Xếp loại': 'Khá', 'Số SV': gpaDist.good ?? 0 },
+      { 'Xếp loại': 'Trung bình', 'Số SV': gpaDist.average ?? 0 },
+      { 'Xếp loại': 'Yếu', 'Số SV': gpaDist.weak ?? 0 },
     ]), 'GPA')
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(debtData.map(r => ({ 'Khoảng nợ': r.range, 'Số SV': r.count }))), 'Nợ tín chỉ')
     const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
@@ -104,7 +114,9 @@ export default function AdvisorReportPage() {
               <select className="form-control" value={filters.classId}
                 onChange={e => setFilters(f => ({ ...f, classId: e.target.value }))}>
                 <option value="">— Chọn lớp —</option>
-                {adminClasses.map(c => <option key={c.adminClassId} value={c.adminClassId}>{c.classCode} – {c.className}</option>)}
+                {(adminClasses as { adminClassId?: number | string; classCode?: string; className?: string }[]).map(c => (
+                  <option key={c.adminClassId} value={c.adminClassId}>{c.classCode} – {c.className}</option>
+                ))}
               </select>
             </div>
             <div className="col-md-4">
@@ -112,7 +124,9 @@ export default function AdvisorReportPage() {
               <select className="form-control" value={filters.schoolYearId}
                 onChange={e => setFilters(f => ({ ...f, schoolYearId: e.target.value }))}>
                 <option value="">— Tất cả —</option>
-                {schoolYears.map(s => <option key={s.schoolYearId} value={s.schoolYearId}>{s.yearName}</option>)}
+                {(schoolYears as { schoolYearId?: number | string; yearName?: string }[]).map(s => (
+                  <option key={s.schoolYearId} value={s.schoolYearId}>{s.yearName}</option>
+                ))}
               </select>
             </div>
             <div className="col-md-4">
@@ -133,12 +147,12 @@ export default function AdvisorReportPage() {
       {!isLoading && filters.classId && (
         <>
           <div className="row mb-3">
-            {[
+            {([
               { v: warnings.total || 0, l: 'Cảnh báo HT', c: 'text-danger' },
               { v: warnings.lowGpa || 0, l: 'GPA thấp', c: 'text-warning' },
               { v: warnings.poorAttendance || 0, l: 'Điểm danh kém', c: 'text-info' },
               { v: warnings.both || 0, l: 'Cả hai', c: 'text-danger' },
-            ].map(({ v, l, c }, i) => (
+            ] as { v: number; l: string; c?: string }[]).map(({ v, l, c }, i) => (
               <div className="col-md-3 col-6" key={i}>
                 <div className="card text-center"><div className="card-body">
                   <div className={`h3 mb-0 ${c || ''}`}>{v}</div><small>{l}</small>
