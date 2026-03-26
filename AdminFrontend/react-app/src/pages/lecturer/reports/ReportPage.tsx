@@ -10,11 +10,44 @@ import { useAuth } from '../../../contexts/AuthContext'
 import lookupApi from '../../../api/lookupApi'
 import adminClassApi from '../../../api/adminClassApi'
 import reportApi from '../../../api/reportApi'
-import type { LecturerReport, AdminClass } from '../../../types'
+import type { AdminClass } from '../../../types'
 
 // ============================================================
 // LOCAL TYPES
 // ============================================================
+
+// Local type matching actual API response (differs from types/index.ts LecturerReport)
+interface LecturerReportApi {
+  attendanceStats?: {
+    byStatus?: {
+      present?: number
+      absent?: number
+      late?: number
+      excused?: number
+      [key: string]: number | undefined
+    }
+    totalStudents?: number
+    goodAttendance?: number
+    poorAttendance?: number
+    averageAttendanceRate?: number
+    [key: string]: number | { [key: string]: number | undefined } | undefined
+  }
+  gpaDistribution?: {
+    excellent?: number
+    good?: number
+    average?: number
+    weak?: number
+    [key: string]: number | undefined
+  }
+  lowAttendanceStudents?: {
+    studentId: number
+    studentCode?: string
+    fullName?: string
+    studentName?: string
+    className?: string
+    attendanceRate?: number
+  }[]
+}
 
 interface SchoolYearItem {
   schoolYearId: number
@@ -125,8 +158,8 @@ export default function LecturerReportPage(): React.JSX.Element {
     staleTime: 5 * 60 * 1000,
     queryFn: () =>
       adminClassApi.getAll({ advisorId: lecturerId as number | undefined, pageSize: 1000 }).then(r => {
-        const d = r.data
-        if ((d as Record<string, unknown>)?.data) return (d as { data: AdminClass[] }).data
+        const d = r.data as unknown
+        if ((d as Record<string, unknown>)?.data) return (d as unknown as { data: AdminClass[] }).data
         if (Array.isArray(d)) return d as AdminClass[]
         return ((d as Record<string, unknown>)?.data as AdminClass[] | undefined)
           ?? ((d as Record<string, unknown>)?.items as AdminClass[] | undefined)
@@ -134,7 +167,7 @@ export default function LecturerReportPage(): React.JSX.Element {
       }),
   })
 
-  const { data: report = {} as LecturerReport, isLoading } = useQuery<LecturerReport>({
+  const { data: report = {} as LecturerReportApi, isLoading } = useQuery<LecturerReportApi>({
     queryKey: ['lecturer-reports', filters],
     enabled: !!filters.classId,
     staleTime: 0,
@@ -143,15 +176,15 @@ export default function LecturerReportPage(): React.JSX.Element {
       if (filters.schoolYearId) params.schoolYearId = filters.schoolYearId
       if (filters.semester)     params.semester     = filters.semester
       return reportApi.getLecturerReport({ classId: filters.classId, ...params }).then(r => {
-        const d = r.data
-        return ((d as Record<string, unknown>)?.data as LecturerReport | undefined) ?? (d as LecturerReport)
+        const d = r.data as unknown
+        return ((d as Record<string, unknown>)?.data as LecturerReportApi | undefined) ?? (d as LecturerReportApi)
       })
     },
   })
 
-  const attStats = (report as unknown as AttendanceStatsRaw).attendanceStats ?? {}
-  const gpaDist   = (report as unknown as { gpaDistribution: GpaDistributionRaw }).gpaDistribution ?? {}
-  const lowAttRaw = report.lowAttendanceStudents ?? []
+  const attStats = (report as unknown as LecturerReportApi).attendanceStats ?? {}
+  const gpaDist   = (report as unknown as LecturerReportApi).gpaDistribution ?? {}
+  const lowAttRaw = (report as unknown as LecturerReportApi).lowAttendanceStudents ?? []
 
   const gpaData: GpaChartEntry[] = [
     { name: 'Giỏi (≥3.5)',   value: gpaDist.excellent ?? 0, color: GPA_COLORS.excellent },

@@ -4,9 +4,9 @@ import apiClient from '../../api'
 import '../../assets/css/dashboard.css'
 
 interface StatConfig {
-  icon: string
-  color: string
-  label: string
+  icon?: string
+  color?: string
+  label?: string
 }
 
 interface DashboardStats {

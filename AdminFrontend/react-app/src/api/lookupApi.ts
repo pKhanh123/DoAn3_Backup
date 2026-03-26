@@ -29,6 +29,8 @@ const lookupApi = {
     }[]>('/school-years'),
   getRoles: () =>
     apiClient.get<{ roleId: number; roleName: string }[]>('/roles'),
+  getRooms: () =>
+    apiClient.get<{ roomId: number; roomCode: string; building: string }[]>('/rooms'),
 }
 
 export default lookupApi

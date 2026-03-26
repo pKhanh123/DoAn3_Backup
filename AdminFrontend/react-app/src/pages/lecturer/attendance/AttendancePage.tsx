@@ -82,7 +82,7 @@ function getIsoWeek(date: Date): { year: number; week: number } {
   const dayNum = d.getUTCDay() || 7
   d.setUTCDate(d.getUTCDate() + 4 - dayNum)
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-  const weekNo = Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
+  const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
   return { year: d.getUTCFullYear(), week: weekNo }
 }
 
@@ -141,8 +141,8 @@ export default function AttendancePage(): React.JSX.Element {
     }
     lecturerApi.getAll()
       .then(r => {
-        const raw = r.data
-        const list: Lecturer[] = Array.isArray(raw) ? raw : (raw?.data as Lecturer[] | undefined) ?? []
+        const raw = r.data as unknown as Lecturer[] | { data?: Lecturer[] }
+        const list: Lecturer[] = Array.isArray(raw) ? raw : ((raw as { data?: Lecturer[] })?.data ?? [])
         const found = list.find(
           l => (l.lecturerId as number | string | undefined) === user.userId
         )
@@ -158,21 +158,21 @@ export default function AttendancePage(): React.JSX.Element {
     queryFn: () => {
       if (!lecturerId) return Promise.resolve([])
       return timetableApi.getLecturerWeek(lecturerId, iso.year, iso.week).then(r => {
-        const d = r.data
-        const data: Session[] = Array.isArray(d)
-          ? d
-          : ((d as Record<string, unknown>)?.data as Session[] | undefined) ?? []
-        return (data as Session[])
-          .filter((s: Session) => {
-            const w = (s as Record<string, unknown>).weekday as number | undefined
+        const rdata = r.data as unknown
+        const rawList: Record<string, unknown>[] = Array.isArray(rdata)
+          ? (rdata as Record<string, unknown>[])
+          : (((rdata as Record<string, unknown>)?.data as Record<string, unknown>[]) ?? [])
+        return rawList
+          .filter((s) => {
+            const w = s.weekday as number | undefined
             return w === weekday
           })
-          .sort((a: Session, b: Session) => {
-            const ta = ((a as Record<string, unknown>).start_time ?? a.startTime) as string ?? ''
-            const tb = ((b as Record<string, unknown>).start_time ?? b.startTime) as string ?? ''
+          .sort((a, b) => {
+            const ta = ((a.start_time ?? a.startTime) as string) ?? ''
+            const tb = ((b.start_time ?? b.startTime) as string) ?? ''
             return ta.localeCompare(tb)
           })
-          .map((s: Session & Record<string, unknown>) => ({
+          .map((s) => ({
             sessionId: (s.session_id ?? s.sessionId) as number | string,
             classId:   (s.class_id   ?? s.classId)   as number | string,
             subjectName: (s.subject_name ?? s.subjectName) as string ?? 'N/A',
@@ -180,7 +180,7 @@ export default function AttendancePage(): React.JSX.Element {
             room:        (s.room_code    ?? s.roomCode)    as string ?? 'N/A',
             startTime:   formatTime(s.start_time ?? s.startTime),
             endTime:     formatTime(s.end_time   ?? s.endTime),
-          }))
+          })) as Session[]
       })
     },
     enabled: !!lecturerId,
@@ -197,8 +197,8 @@ export default function AttendancePage(): React.JSX.Element {
           try {
             const r = await attendanceApi.getBySchedule(s.sessionId as number)
             const atts: Record<string, unknown>[] = Array.isArray(r.data)
-              ? r.data
-              : ((r.data as Record<string, unknown>)?.data as Record<string, unknown>[] | undefined) ?? []
+              ? (r.data as unknown as Record<string, unknown>[])
+              : ((r.data as unknown as Record<string, unknown>)?.data as Record<string, unknown>[] | undefined) ?? []
             const todayAtts = atts.filter(a => extractAttendanceDate(a) === today)
             return { ...s, attendanceSaved: todayAtts.length > 0 }
           } catch {
@@ -217,8 +217,8 @@ export default function AttendancePage(): React.JSX.Element {
     mutationFn: async ({ session, students }) => {
       const r = await attendanceApi.getBySchedule(session.sessionId as number)
       const atts: Record<string, unknown>[] = Array.isArray(r.data)
-        ? r.data
-        : ((r.data as Record<string, unknown>)?.data as Record<string, unknown>[] | undefined) ?? []
+        ? (r.data as unknown as Record<string, unknown>[])
+        : ((r.data as unknown as Record<string, unknown>)?.data as Record<string, unknown>[] | undefined) ?? []
       const todayAtts = atts.filter(a => extractAttendanceDate(a) === today)
       const attMap: Record<number, number | string> = {}
       todayAtts.forEach(a => {
@@ -251,8 +251,8 @@ export default function AttendancePage(): React.JSX.Element {
         if (existingId) {
           return attendanceApi.update(existingId as number, {
             status: toBackendStatus(student.status) as AttendanceStatus,
-            notes:  student.note || null,
-          })
+            notes:  student.note || undefined,
+          } as unknown as import('../../../types').AttendancePayload)
         }
         return attendanceApi.create({
           studentId:      student.studentId,

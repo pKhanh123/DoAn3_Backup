@@ -31,6 +31,10 @@ const adminClassApi = {
     apiClient.post(`${BASE}/transfer`, { studentId, fromClassId, toClassId }),
   getFaculties: () =>
     apiClient.get<{ facultyId: number; facultyName: string }[]>('/faculties'),
+  getMajors: () =>
+    apiClient.get<{ majorId: number; majorName: string; facultyId: number }[]>('/majors'),
+  getLecturers: () =>
+    apiClient.get<{ lecturerId: number; fullName: string; lecturerCode: string }[]>('/lecturers'),
   getAcademicYears: () =>
     apiClient.get<{ academicYearId: number; academicYearName: string }[]>('/academic-years'),
 }

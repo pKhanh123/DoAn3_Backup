@@ -109,8 +109,8 @@ export default function SubjectListPage(): React.JSX.Element {
       if (Object.keys(errs).length > 0) throw { validation: errs }
       const payload = { ...form, credits: Number(form.credits) || 3 }
       return editingSubject
-        ? subjectApi.update(editingSubject.subjectId, payload)
-        : subjectApi.create(payload)
+        ? subjectApi.update(editingSubject.subjectId, payload as unknown as import('../../../types').SubjectFormData)
+        : subjectApi.create(payload as unknown as import('../../../types').SubjectFormData)
     },
     onSuccess: () => {
       toast.success(`${editingSubject ? 'Cập nhật' : 'Thêm'} môn học thành công!`)

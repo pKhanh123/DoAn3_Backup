@@ -4,7 +4,6 @@ import type {
   LecturerDetailResponse,
   LecturerDefaultResponse,
   DepartmentListResponse,
-  SubjectListResponse,
   LecturerSubjectListResponse,
 } from '../types/api'
 import type {

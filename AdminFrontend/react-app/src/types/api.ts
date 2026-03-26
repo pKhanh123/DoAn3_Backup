@@ -71,7 +71,7 @@ export type LecturerListResponse = ApiResponse<Lecturer[]>
 export type LecturerDetailResponse = ApiResponse<Lecturer>
 export type LecturerDefaultResponse = ApiResponse<string>
 export type DepartmentListResponse = ApiResponse<Department[]>
-export type SubjectListResponse = ApiResponse<Subject[]>
+// SubjectListResponse is defined above in LECTURER section
 export type LecturerSubjectListResponse = ApiResponse<LecturerSubject[]>
 
 // ============================================================
@@ -86,7 +86,7 @@ export type AdvisorDefaultResponse = ApiResponse<string>
 // SUBJECT
 // ============================================================
 
-export type SubjectListResponse = ApiResponse<Subject[]>
+// SubjectListResponse is defined above in LECTURER section
 export type SubjectDetailResponse = ApiResponse<Subject>
 export type SubjectDefaultResponse = ApiResponse<string>
 

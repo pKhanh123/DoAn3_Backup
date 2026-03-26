@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { api } from '../api'
+import apiClient from '../api'
 import { STORAGE_KEYS } from '../utils/constants'
 import type { UserRole } from '../types'
 
@@ -59,7 +59,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         sessionStorage.removeItem(k)
       }
     )
-    api.post('/auth/logout').catch(() => {})
+    apiClient.post('/auth/logout').catch(() => {})
     set({ user: null, token: null, isAuthenticated: false })
     window.location.href = '/auth/login'
   },

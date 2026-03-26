@@ -39,6 +39,12 @@ export interface AuthUser {
   fullName: string
   role: UserRole
   avatarUrl?: string
+  // Extended properties used by lecturer/student pages
+  lecturerId?: number | string
+  relatedId?: number | string
+  studentId?: number | string
+  advisorId?: number | string
+  departmentId?: number | string
 }
 
 export interface AuthState {

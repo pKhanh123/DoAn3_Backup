@@ -11,6 +11,7 @@ interface Role {
   roleName: string
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface UserPayload {
   username?: string
   password?: string
@@ -20,6 +21,15 @@ interface UserPayload {
   roleId?: string | number
   isActive: boolean
   isEditMode?: boolean
+}
+
+// Input element props - explicit subset used in this form
+interface InputFieldProps {
+  name: string
+  value: string | number | boolean
+  onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void
+  onBlur?: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => void
+  className?: string
 }
 
 interface FormErrors {
@@ -122,7 +132,11 @@ export default function UserFormPage(): React.JSX.Element {
   const { isLoading } = useQuery({
     queryKey: ['user', id],
     queryFn: () => userApi.getById(id!).then((r) => {
-      const u = (r.data as { data?: UserPayload } | UserPayload)?.data || (r.data as UserPayload)
+      const raw = r.data as unknown
+      const u = (typeof raw === 'object' && raw !== null && 'data' in raw
+        ? (raw as { data?: UserPayload }).data
+        : raw) as UserPayload | undefined
+      if (!u) return
       setForm((f) => ({
         ...f,
         username: u.username || '',
@@ -143,8 +157,8 @@ export default function UserFormPage(): React.JSX.Element {
       const { isEditMode: _em, password: _pw, ...payload } = form
       if (!isEditMode && form.password) (payload as UserPayload & { password: string }).password = form.password
       return isEditMode
-        ? userApi.update(id!, payload as Omit<UserPayload, 'isEditMode'>)
-        : userApi.create(payload as Omit<UserPayload, 'isEditMode' | 'isActive'>)
+        ? userApi.update(id!, payload as unknown as import('../../../types').UserFormData)
+        : userApi.create(payload as unknown as import('../../../types').UserFormData)
     },
     onSuccess: () => {
       toast.success(`${isEditMode ? 'Cập nhật' : 'Thêm'} người dùng thành công!`)
@@ -172,7 +186,7 @@ export default function UserFormPage(): React.JSX.Element {
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void {
     const { name, value, type } = e.target
     const checked = (e.target as HTMLInputElement).checked
-    setForm((f) => ({ ...f, [name]: type === 'checkbox' ? checked : value }))
+    setForm((f) => ({ ...f, [name as string]: type === 'checkbox' ? checked : value }))
     setErrors((err) => { const n = { ...err }; delete n[name as keyof FormErrors]; return n })
   }
 
@@ -196,9 +210,9 @@ export default function UserFormPage(): React.JSX.Element {
     saveMutation.mutate()
   }
 
-  const field = (name: keyof UserPayload) => ({
+  const field = (name: keyof UserPayload): InputFieldProps => ({
     name,
-    value: form[name] ?? '',
+    value: form[name] as string | number,
     onChange: handleChange,
     onBlur: handleBlur,
     className: `form-control${touched[name as keyof TouchedFields] && errors[name as keyof FormErrors] ? ' is-invalid' : ''}`,
@@ -227,7 +241,11 @@ export default function UserFormPage(): React.JSX.Element {
                     <div className="form-group col-md-6">
                       <label>Tên đăng nhập <span className="text-danger">*</span></label>
                       <input
-                        {...field('username')}
+                        name="username"
+                        value={(form.username ?? '') as string}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        className={`form-control${touched.username && errors.username ? ' is-invalid' : ''}`}
                         type="text"
                         placeholder="3-20 ký tự, chỉ chữ và số"
                         autoComplete="username"
@@ -239,7 +257,11 @@ export default function UserFormPage(): React.JSX.Element {
                     <div className="form-group col-md-6">
                       <label>Mật khẩu <span className="text-danger">*</span></label>
                       <input
-                        {...field('password')}
+                        name="password"
+                        value={(form.password ?? '') as string}
+                        onChange={handleChange as (e: React.ChangeEvent<HTMLInputElement>) => void}
+                        onBlur={handleBlur as (e: React.FocusEvent<HTMLInputElement>) => void}
+                        className={`form-control${touched.password && errors.password ? ' is-invalid' : ''}`}
                         type="password"
                         placeholder="Tối thiểu 6 ký tự"
                         autoComplete="new-password"
@@ -258,14 +280,31 @@ export default function UserFormPage(): React.JSX.Element {
                 <div className="form-row">
                   <div className="form-group col-md-6">
                     <label>Họ tên <span className="text-danger">*</span></label>
-                    <input {...field('fullName')} type="text" placeholder="Họ và tên đầy đủ" />
+                    <input
+                      name="fullName"
+                      value={(form.fullName ?? '') as string}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`form-control${touched.fullName && errors.fullName ? ' is-invalid' : ''}`}
+                      type="text"
+                      placeholder="Họ và tên đầy đủ"
+                    />
                     {touched.fullName && errors.fullName && (
                       <div className="invalid-feedback d-block">{errors.fullName}</div>
                     )}
                   </div>
                   <div className="form-group col-md-6">
                     <label>Email <span className="text-danger">*</span></label>
-                    <input {...field('email')} type="email" placeholder="email@example.com" autoComplete="email" />
+                    <input
+                      name="email"
+                      value={(form.email ?? '') as string}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`form-control${touched.email && errors.email ? ' is-invalid' : ''}`}
+                      type="email"
+                      placeholder="email@example.com"
+                      autoComplete="email"
+                    />
                     {touched.email && errors.email && (
                       <div className="invalid-feedback d-block">{errors.email}</div>
                     )}
@@ -274,7 +313,16 @@ export default function UserFormPage(): React.JSX.Element {
                 <div className="form-row">
                   <div className="form-group col-md-6">
                     <label>Số điện thoại</label>
-                    <input {...field('phone')} type="text" placeholder="0xxxxxxxxx (10-11 số)" autoComplete="tel" />
+                    <input
+                      name="phone"
+                      value={(form.phone ?? '') as string}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`form-control${touched.phone && errors.phone ? ' is-invalid' : ''}`}
+                      type="text"
+                      placeholder="0xxxxxxxxx (10-11 số)"
+                      autoComplete="tel"
+                    />
                     {touched.phone && errors.phone && (
                       <div className="invalid-feedback d-block">{errors.phone}</div>
                     )}
@@ -288,7 +336,13 @@ export default function UserFormPage(): React.JSX.Element {
                 <div className="form-row">
                   <div className="form-group col-md-6">
                     <label>Vai trò <span className="text-danger">*</span></label>
-                    <select {...field('roleId')}>
+                    <select
+                      name="roleId"
+                      value={(form.roleId ?? '') as string}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      className={`form-control${touched.roleId && errors.roleId ? ' is-invalid' : ''}`}
+                    >
                       <option value="">-- Chọn vai trò --</option>
                       {roles.map((r) => (
                         <option key={String(r.roleId)} value={String(r.roleId)}>{r.roleName}</option>
@@ -308,7 +362,9 @@ export default function UserFormPage(): React.JSX.Element {
                   <div className="form-group">
                     <div className="form-check form-switch">
                       <input
-                        {...field('isActive')}
+                        name="isActive"
+                        checked={form.isActive}
+                        onChange={handleChange}
                         type="checkbox"
                         className="form-check-input"
                         id="isActive"

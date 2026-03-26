@@ -141,7 +141,7 @@ export default function StudentListPage(): React.JSX.Element {
   const { data: majors = [] } = useQuery<Major[]>({
     queryKey: ['majors', filterFaculty],
     queryFn: () => filterFaculty
-      ? studentApi.getMajors(filterFaculty).then((r) => {
+      ? studentApi.getMajors(Number(filterFaculty)).then((r) => {
           const d = r.data as { data?: Major[] } | Major[]
           return (typeof d === 'object' && !Array.isArray(d) ? (d as { data?: Major[] }).data : d) || []
         })

@@ -1,40 +1,80 @@
 import { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, type Location } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
-import authApi from '../../api/authApi'
 import { ROLES } from '../../utils/constants'
+import type { AuthUser, UserRole } from '../../types'
 import '../../assets/css/login.css'
 
-export default function LoginPage() {
+// ============================================================
+// LOCAL TYPES
+// ============================================================
+
+interface LoginError {
+  response?: {
+    status?: number
+    data?: unknown
+  }
+}
+
+interface LoginPayload {
+  token: string
+  refreshToken?: string
+  userId: string | number
+  username: string
+  role: UserRole
+  fullName?: string
+  avatarUrl?: string
+}
+
+interface LocationState {
+  resetSuccess?: boolean
+  from?: {
+    pathname: string
+  }
+}
+
+// ============================================================
+// COMPONENT
+// ============================================================
+
+export default function LoginPage(): React.JSX.Element {
   const navigate = useNavigate()
-  const location = useLocation()
+  const location = useLocation() as Location<LocationState>
   const { login } = useAuth()
 
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [rememberMe, setRememberMe] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [username, setUsername] = useState<string>('')
+  const [password, setPassword] = useState<string>('')
+  const [showPassword, setShowPassword] = useState<boolean>(false)
+  const [rememberMe, setRememberMe] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string>('')
 
-  const from = location.state?.from?.pathname || null
+  const from = location.state?.from?.pathname ?? null
 
-  const getErrorMessage = (err) => {
-    const status = err?.response?.status
-    const msg = err?.response?.data?.message || err?.response?.data || ''
+  const getErrorMessage = (err: LoginError): string => {
+    const status = err.response?.status
+    const msg = err.response?.data
     if (status === 401) return 'Tên đăng nhập hoặc mật khẩu không đúng.'
     if (status === 403) return 'Tài khoản đã bị khóa.'
-    if (status === 400 && msg.includes('locked')) return 'Tài khoản đã bị khóa do nhập sai nhiều lần.'
+    if (status === 400 && typeof msg === 'string' && msg.includes('locked')) {
+      return 'Tài khoản đã bị khóa do nhập sai nhiều lần.'
+    }
     if (msg && typeof msg === 'string') return msg
     return 'Đăng nhập thất bại. Vui lòng thử lại.'
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault()
     setError('')
 
-    if (!username.trim()) return setError('Vui lòng nhập tên đăng nhập.')
-    if (!password) return setError('Vui lòng nhập mật khẩu.')
+    if (!username.trim()) {
+      setError('Vui lòng nhập tên đăng nhập.')
+      return
+    }
+    if (!password) {
+      setError('Vui lòng nhập mật khẩu.')
+      return
+    }
 
     setLoading(true)
     try {
@@ -46,29 +86,34 @@ export default function LoginPage() {
       })
 
       if (!response.ok) {
-        const errData = await response.json().catch(() => ({}))
+        const errData = await response.json().catch(() => ({})) as { message?: string }
         throw new Error(errData.message || `Lỗi ${response.status}`)
       }
 
-      const res = await response.json()
+      const res = await response.json() as unknown as { data?: LoginPayload } | LoginPayload
       // Backend trả về { data: { token, refreshToken, userId, username, role, fullName, avatarUrl } }
-      const payload = res.data ?? res
+      let payload: LoginPayload
+      if ('data' in res && res.data) {
+        payload = res.data
+      } else {
+        payload = res as unknown as LoginPayload
+      }
       const { token, refreshToken, userId, username: uname, role, fullName, avatarUrl } = payload
 
       if (!token || !userId) {
         throw new Error('Phản hồi từ server không hợp lệ.')
       }
 
-      const userData = {
+      const userData: AuthUser = {
         userId,
         username: uname,
         email: '',
-        fullName,
+        fullName: fullName ?? '',
         role,
         avatarUrl,
       }
 
-      login(userData, token, refreshToken || '', rememberMe)
+      login(userData, token, refreshToken ?? '', rememberMe)
 
       if (from) {
         navigate(from, { replace: true })
@@ -92,7 +137,7 @@ export default function LoginPage() {
           navigate('/', { replace: true })
       }
     } catch (err) {
-      setError(getErrorMessage(err))
+      setError(getErrorMessage(err as LoginError))
     } finally {
       setLoading(false)
     }
@@ -139,7 +184,7 @@ export default function LoginPage() {
                 className="login-input"
                 placeholder="Tên đăng nhập"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                 disabled={loading}
                 autoFocus
               />
@@ -155,7 +200,7 @@ export default function LoginPage() {
                 className="login-input login-input-with-toggle"
                 placeholder="Mật khẩu"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 disabled={loading}
               />
               <button
@@ -175,7 +220,7 @@ export default function LoginPage() {
               <input
                 type="checkbox"
                 checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRememberMe(e.target.checked)}
                 disabled={loading}
               />
               <span className="checkbox-custom" />

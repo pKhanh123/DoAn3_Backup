@@ -17,6 +17,8 @@ const timetableApi = {
     apiClient.get<TimetableSession[]>(
       `/timetable/lecturer/${lecturerId}?year=${year}&week=${week}`
     ),
+  getRooms: (_facultyId?: number | null, _all?: boolean) =>
+    apiClient.get<{ roomId: number; roomCode: string; building: string }[]>('/rooms'),
 }
 
 export default timetableApi

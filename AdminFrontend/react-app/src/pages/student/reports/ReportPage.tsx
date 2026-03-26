@@ -81,8 +81,10 @@ export default function StudentReportPage(): React.JSX.Element {
     staleTime: 5 * 60 * 1000,
     queryFn: () =>
       lookupApi.getSchoolYears().then(r => {
-        const d = r.data
-        return Array.isArray(d) ? d : (d?.data || d?.items || [])
+        const d = r.data as unknown
+        if (Array.isArray(d)) return d as SchoolYear[]
+        const wrapped = d as { data?: unknown; items?: unknown }
+        return (Array.isArray(wrapped.data) ? wrapped.data : wrapped.items) as SchoolYear[] ?? []
       }),
   })
 

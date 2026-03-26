@@ -155,8 +155,8 @@ export default function AdminClassListPage(): React.JSX.Element {
     mutationFn: () => {
       const payload = { ...form, maxStudents: Number(form.maxStudents) || 50 }
       return editingClass
-        ? adminClassApi.update(editingClass.adminClassId || editingClass.classId, payload)
-        : adminClassApi.create(payload)
+        ? adminClassApi.update(editingClass.adminClassId || editingClass.classId, payload as unknown as import('../../../types').AdminClassFormData)
+        : adminClassApi.create(payload as unknown as import('../../../types').AdminClassFormData)
     },
     onSuccess: () => {
       toast.success(`${editingClass ? 'Cập nhật' : 'Tạo'} lớp hành chính thành công!`)

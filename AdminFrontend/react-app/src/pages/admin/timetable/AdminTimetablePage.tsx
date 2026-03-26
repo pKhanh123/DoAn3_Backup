@@ -186,10 +186,7 @@ export default function AdminTimetablePage(): React.JSX.Element {
     queryFn: () => lookupApi.getRooms().then((r: any) => {
       const d = r.data
       return (Array.isArray(d) ? d : (d?.data || d?.items || [])) as RoomItem[]
-    }).catch(() => scheduleApi.getRooms(null, true).then((r: any) => {
-      const d = r.data
-      return (Array.isArray(d) ? d : (d?.data || d?.items || [])) as RoomItem[]
-    })),
+    }),
   })
 
   const { data: sessions = [], isLoading } = useQuery<SessionItem[]>({
@@ -231,17 +228,17 @@ export default function AdminTimetablePage(): React.JSX.Element {
   const checkMutation = useMutation<unknown, ApiError, void>({
     mutationFn: () => {
       const payload = {
-        classId: form.classId || null,
-        subjectId: form.subjectId || null,
-        lecturerId: form.lecturerId || null,
-        roomId: form.roomId || null,
+        classId: form.classId ? Number(form.classId) : 0,
+        subjectId: form.subjectId ? Number(form.subjectId) : 0,
+        lecturerId: form.lecturerId ? Number(form.lecturerId) : 0,
+        roomId: form.roomId ? Number(form.roomId) : 0,
         weekday: Number(form.weekday),
-        startTime: timeToApi(form.startTime),
-        endTime: timeToApi(form.endTime),
-        periodFrom: form.periodFrom ? Number(form.periodFrom) : null,
-        periodTo: form.periodTo ? Number(form.periodTo) : null,
-        sessionId: editMode ? editingSession?.sessionId : null,
-      }
+        periodStart: form.periodFrom ? Number(form.periodFrom) : 0,
+        periodEnd: form.periodTo ? Number(form.periodTo) : 0,
+        weekNumber: iso.week,
+        semester: '',
+        academicYear: String(year),
+      } as unknown as import('../../../types').ScheduleFormData
       setCheckingConflicts(true)
       return scheduleApi.checkConflicts(payload)
     },
@@ -267,17 +264,18 @@ export default function AdminTimetablePage(): React.JSX.Element {
   const saveMutation = useMutation<unknown, ApiError, void>({
     mutationFn: () => {
       const payload = {
-        classId: form.classId,
-        subjectId: form.subjectId,
-        lecturerId: form.lecturerId || null,
-        roomId: form.roomId || null,
+        scheduleCode: '',
+        classId: Number(form.classId),
+        subjectId: Number(form.subjectId),
+        lecturerId: form.lecturerId ? Number(form.lecturerId) : 0,
+        roomId: form.roomId ? Number(form.roomId) : 0,
         weekday: Number(form.weekday),
-        startTime: timeToApi(form.startTime),
-        endTime: timeToApi(form.endTime),
-        periodFrom: Number(form.periodFrom),
-        periodTo: Number(form.periodTo),
-        notes: form.notes || null,
-      }
+        periodStart: Number(form.periodFrom),
+        periodEnd: Number(form.periodTo),
+        weekNumber: iso.week,
+        semester: '',
+        academicYear: String(year),
+      } as unknown as import('../../../types').ScheduleFormData
       return editMode
         ? scheduleApi.update((editingSession as SessionItem).sessionId, payload)
         : scheduleApi.create(payload)

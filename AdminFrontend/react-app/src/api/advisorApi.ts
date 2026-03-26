@@ -23,6 +23,8 @@ const advisorApi = {
     apiClient.get<{ departmentId: number; departmentName: string }[]>('/departments'),
   getAdvisorsByDepartment: (departmentId: number) =>
     apiClient.get<Advisor[]>('/advisors', { params: { departmentId } }),
+  assignStudents: (advisorId: number | string, studentIds: number[]) =>
+    apiClient.post(`${BASE}/${advisorId}/students`, { studentIds }),
 }
 
 export default advisorApi

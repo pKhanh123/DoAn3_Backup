@@ -99,15 +99,16 @@ export default function LecturerDashboardPage(): React.JSX.Element {
   const { data: rawSchedule, isLoading: loadingSchedule } = useQuery({
     queryKey: ['lecturer-today-schedule'],
     queryFn: () =>
-      apiClient.get<TodaySession[]>('/dashboard/lecturer/today-schedule').then((r) => r.data),
+      apiClient.get<TodaySession[]>('/dashboard/lecturer/today-schedule')
+        .then((r) => r.data as unknown),
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
   })
 
   const todaySchedule: TodaySession[] = Array.isArray(rawSchedule)
     ? rawSchedule
-    : Array.isArray(rawSchedule?.data)
-      ? (rawSchedule as { data: TodaySession[] }).data
+    : Array.isArray((rawSchedule as unknown as { data?: TodaySession[] })?.data)
+      ? (rawSchedule as unknown as { data: TodaySession[] }).data
       : []
 
   const unattendCount: number =
@@ -225,7 +226,7 @@ export default function LecturerDashboardPage(): React.JSX.Element {
                         <td>
                           <button
                             className="btn btn-sm btn-primary"
-                            onClick={(): void => navigate(attUrl)}
+                            onClick={() => { navigate(attUrl); void 0 }}
                           >
                             <i className="fas fa-clipboard-check"></i> Điểm danh
                           </button>
@@ -266,7 +267,7 @@ export default function LecturerDashboardPage(): React.JSX.Element {
               <button
                 key={to}
                 className="quick-action-btn"
-                onClick={(): void => navigate(to)}
+                onClick={() => { navigate(to); void 0 }}
               >
                 <i className={`fas ${icon}`}></i>
                 <span>{label}</span>

@@ -132,7 +132,7 @@ export default function StudentFormPage(): React.JSX.Element {
   const { data: majors = [] } = useQuery<Major[]>({
     queryKey: ['majors', form.facultyId],
     queryFn: () => form.facultyId
-      ? studentApi.getMajors(String(form.facultyId)).then(r => {
+      ? studentApi.getMajors(Number(form.facultyId)).then(r => {
           const d = r.data as { data?: Major[] } | Major[]
           return (typeof d === 'object' && !Array.isArray(d) ? (d as { data?: Major[] }).data : d) || []
         })
@@ -155,19 +155,23 @@ export default function StudentFormPage(): React.JSX.Element {
   const { isLoading } = useQuery({
     queryKey: ['student', id],
     queryFn: () => studentApi.getById(id!).then(r => {
-      const s = (r.data as { data?: StudentPayload } | StudentPayload)?.data || (r.data as StudentPayload)
+      const raw = r.data as unknown
+      const s = (typeof raw === 'object' && raw !== null && 'data' in raw
+        ? (raw as { data?: StudentPayload }).data
+        : raw) as StudentPayload | undefined
+      if (!s) return
       setForm(f => ({
         ...f,
         studentCode: s.studentCode || '',
         fullName: s.fullName || '',
         email: s.email || '',
         phone: s.phone || '',
-        dateOfBirth: formatDateForInput(s.dateOfBirth || (s as Record<string, string | null>).dob as string | null | undefined),
+        dateOfBirth: formatDateForInput(s.dateOfBirth || ((s as unknown as Record<string, string | null | undefined>).dob)),
         gender: s.gender || '',
         address: s.address || '',
-        facultyId: s.facultyId || '',
-        majorId: s.majorId || '',
-        academicYearId: s.academicYearId || '',
+        facultyId: String(s.facultyId || ''),
+        majorId: String(s.majorId || ''),
+        academicYearId: String(s.academicYearId || ''),
         cohortYear: s.cohortYear || '',
       }))
     }),
@@ -178,20 +182,20 @@ export default function StudentFormPage(): React.JSX.Element {
   // Save mutation
   const saveMutation = useMutation<unknown, ApiError, void>({
     mutationFn: () => {
-      const payload: StudentPayload = {
+      const payload = {
         ...form,
         dateOfBirth: form.dateOfBirth
           ? new Date(form.dateOfBirth + 'T00:00:00').toISOString()
-          : null,
-        phone: form.phone ? formatPhone(form.phone) : null,
-        facultyId: form.facultyId || null,
-        majorId: form.majorId || null,
-        academicYearId: form.academicYearId || null,
-        cohortYear: form.cohortYear || null,
-      }
+          : undefined,
+        phone: form.phone ? formatPhone(form.phone) : undefined,
+        facultyId: form.facultyId ? String(form.facultyId) : null,
+        majorId: form.majorId ? String(form.majorId) : null,
+        academicYearId: form.academicYearId ? String(form.academicYearId) : null,
+        cohortYear: form.cohortYear || undefined,
+      } as unknown as import('../../../types').StudentFormData
       return isEditMode
         ? studentApi.update(id!, payload)
-        : studentApi.create(payload as Omit<StudentPayload, 'facultyId'> & { studentCode: string })
+        : studentApi.create(payload)
     },
     onSuccess: () => {
       toast.success(`${isEditMode ? 'Cập nhật' : 'Thêm'} sinh viên thành công!`)

@@ -7,7 +7,7 @@ import type {
 } from '../types'
 
 const reportApi = {
-  getAdminReport: (params: Record<string, unknown> = {}) =>
+  getAdminReports: (params: Record<string, unknown> = {}) =>
     apiClient.get<AdminReport>('/reports/admin', { params }),
   getLecturerReport: (params: Record<string, unknown> = {}) =>
     apiClient.get<LecturerReport>('/reports/lecturer', { params }),

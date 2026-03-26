@@ -1,6 +1,5 @@
 import apiClient from './index'
 import type {
-  SubjectListResponse,
   SubjectDetailResponse,
   SubjectDefaultResponse,
   DepartmentListResponse,

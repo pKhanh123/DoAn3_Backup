@@ -68,8 +68,8 @@ export default function RoomListPage(): React.JSX.Element {
     queryFn: () => {
       const params: Record<string, string | number> = { page, pageSize }
       if (search) params.search = search
-      if (filterActive === 'true') params.isActive = true
-      if (filterActive === 'false') params.isActive = false
+      if (filterActive === 'true') params.isActive = 1
+      if (filterActive === 'false') params.isActive = 0
       return roomApi.getAll(params).then((r: any) => {
         const d = r.data
         if (d?.success) return { data: (d.data || []) as RoomItem[], pagination: { totalCount: d.totalCount, totalPages: d.totalPages } as Pagination }
@@ -101,8 +101,8 @@ export default function RoomListPage(): React.JSX.Element {
 
   const saveMutation = useMutation<unknown, ApiError, void>({
     mutationFn: () => {
-      const payload = { ...form, capacity: form.capacity ? Number(form.capacity) : null }
-      return editingRoom ? roomApi.update(editingRoom.roomId, payload) : roomApi.create(payload)
+      const payload = { ...form, capacity: form.capacity ? Number(form.capacity) : 0 }
+      return editingRoom ? roomApi.update(editingRoom.roomId, payload as unknown as import('../../../types').RoomFormData) : roomApi.create(payload as unknown as import('../../../types').RoomFormData)
     },
     onSuccess: () => {
       toast.success(`${editingRoom ? 'Cập nhật' : 'Tạo'} phòng học thành công!`)
@@ -122,9 +122,10 @@ export default function RoomListPage(): React.JSX.Element {
     mutationFn: (room) => roomApi.update(room.roomId, {
       roomCode: room.roomCode,
       building: room.building,
-      capacity: room.capacity,
+      capacity: room.capacity || 0,
+      roomType: 'Lecture' as const,
       isActive: !room.isActive,
-    }),
+    } as unknown as import('../../../types').RoomFormData),
     onSuccess: () => {
       toast.success('Cập nhật trạng thái thành công!')
       queryClient.invalidateQueries({ queryKey: ['rooms'] })

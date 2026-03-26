@@ -23,7 +23,7 @@ interface AssignedLecturer {
   lecturer?: { lecturerId?: string; fullName?: string }
   fullName?: string
   isPrimary?: boolean
-  LecturerSubject?: { isPrimary?: boolean }
+  LecSub?: { isPrimary?: boolean }
 }
 
 interface Department {
@@ -42,10 +42,11 @@ interface Subject {
 interface LecturerSubject {
   lecturerSubjectId?: string
   LecturerSubjectId?: string
-  subjectId?: string
+  subjectId?: string | number
   subjectName?: string
   subject?: { subjectName?: string }
   isPrimary?: boolean
+  LecSub?: { isPrimary?: boolean }
 }
 
 interface LecturerFormState {
@@ -161,12 +162,12 @@ export default function LecturerManagePage(): React.JSX.Element {
         throw new Error('Vui lòng điền đầy đủ thông tin bắt buộc')
       const payload = {
         ...lecturerForm,
-        departmentId: lecturerForm.departmentId,
-        joinDate: lecturerForm.joinDate ? new Date(lecturerForm.joinDate + 'T00:00:00').toISOString() : null,
+        departmentId: Number(lecturerForm.departmentId) || 0,
+        joinDate: lecturerForm.joinDate ? new Date(lecturerForm.joinDate + 'T00:00:00').toISOString() : undefined,
       }
       return editingLecturer
-        ? lecturerApi.update(editingLecturer.lecturerId, payload)
-        : lecturerApi.create(payload)
+        ? lecturerApi.update(editingLecturer.lecturerId, payload as unknown as import('../../../types').LecturerFormData)
+        : lecturerApi.create(payload as unknown as import('../../../types').LecturerFormData)
     },
     onSuccess: () => {
       toast.success('Lưu giảng viên thành công!')
@@ -203,19 +204,29 @@ export default function LecturerManagePage(): React.JSX.Element {
   // Fetch lecturer subjects
   const fetchLecturerSubjects = (lecturer: Lecturer): void => {
     lecturerApi.getLecturerSubjects(lecturer.lecturerId).then(r => {
-      const subs = (r.data as { data?: LecturerSubject[] } | LecturerSubject[])?.data || (r.data as LecturerSubject[]) || []
-      const normalized: LecturerSubject[] = Array.isArray(subs) ? subs : []
+      const rdata = r.data as unknown
+      const raw: LecturerSubject[] = (typeof rdata === 'object' && rdata !== null && 'data' in rdata
+        ? (rdata as { data?: LecturerSubject[] }).data
+        : rdata) as LecturerSubject[]
+      const normalized: LecturerSubject[] = Array.isArray(raw) ? raw : []
       setLecturerSubjects(normalized)
-      const assignedIds = normalized
-        .map(s => s.subjectId || (s as unknown as { SubjectId?: string }).SubjectId || s.subject?.subjectId)
-        .filter(Boolean)
-      setAvailableSubjects(allSubjects.filter(s => !assignedIds.includes(s.subjectId)))
+      const assignedIds: (string | number)[] = (normalized as unknown as LecturerSubject[])
+        .map(s => ((s as unknown) as { subjectId?: string | number }).subjectId
+          || ((s as unknown) as { SubjectId?: string | number }).SubjectId
+          || ((s as unknown) as { subject?: { subjectId?: string | number } }).subject?.subjectId)
+        .filter((id): id is string | number => Boolean(id))
+      setAvailableSubjects(allSubjects.filter((s) => !assignedIds.includes(s.subjectId as string | number)))
     }).catch(() => setLecturerSubjects([]))
   }
 
   // Assign subject mutation
   const assignMutation = useMutation<unknown, ApiError, AssignSubjectPayload>({
-    mutationFn: (data: AssignSubjectPayload) => lecturerApi.assignSubject(data),
+    mutationFn: (data: AssignSubjectPayload) =>
+      lecturerApi.assignSubject({
+        lecturerId: Number(data.lecturerId) || 0,
+        subjectId: Number(data.subjectId) || 0,
+        departmentId: 0,
+      }),
     onSuccess: () => {
       toast.success('Phân môn thành công!')
       if (selectedLecturer) fetchLecturerSubjects(selectedLecturer)
@@ -458,7 +469,7 @@ export default function LecturerManagePage(): React.JSX.Element {
                               ? s.assignedLecturers.map((al, i) => (
                                   <span key={i} className="badge badge-info me-1">
                                     {al.fullName || al.lecturer?.fullName}
-                                    {(al.isPrimary || al.LecturerSubject?.isPrimary) ? ' ★' : ''}
+                                    {(al.isPrimary || al.LecSub?.isPrimary) ? ' ★' : ''}
                                   </span>
                                 ))
                               : <span className="text-muted">—</span>
@@ -578,7 +589,7 @@ export default function LecturerManagePage(): React.JSX.Element {
                     {lecturerSubjects.map(ls => (
                       <tr key={ls.lecturerSubjectId || (ls as unknown as { LecturerSubjectId?: string }).LecturerSubjectId || ''}>
                         <td>{ls.subjectName || ls.subject?.subjectName}</td>
-                        <td>{ls.isPrimary || ls.LecturerSubject?.isPrimary ? '★' : ''}</td>
+                        <td>{ls.isPrimary || ls.LecSub?.isPrimary ? '★' : ''}</td>
                         <td>
                           <button className="btn btn-sm btn-danger" onClick={() => handleRemoveSubject(ls.lecturerSubjectId || (ls as unknown as { LecturerSubjectId: string }).LecturerSubjectId)}>
                             <i className="fas fa-times"></i>
@@ -604,7 +615,7 @@ export default function LecturerManagePage(): React.JSX.Element {
                 <div className="col-md-3">
                   <input className="form-control" type="number" placeholder="Số năm KN"
                     value={newSubject.experienceYears}
-                    onChange={e => setNewSubject(s => ({ ...s, experienceYears: e.target.value }))} />
+                    onChange={e => setNewSubject(s => ({ ...s, experienceYears: Number(e.target.value) || 0 }))} />
                 </div>
                 <div className="col-md-3">
                   <div className="form-check form-switch">

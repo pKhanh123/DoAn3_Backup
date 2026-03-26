@@ -5,7 +5,7 @@ import { saveAs } from 'file-saver'
 import * as XLSX from 'xlsx'
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, Legend, Sector
+  ResponsiveContainer, Legend, Sector, SectorProps as RoundedSectorProps
 } from 'recharts'
 import lookupApi from '../../../api/lookupApi'
 import reportApi from '../../../api/reportApi'
@@ -118,7 +118,7 @@ interface SectorProps {
   fill: string
 }
 
-function renderActiveShape(props: SectorProps): React.ReactElement {
+function renderActiveShape(props: RoundedSectorProps): React.JSX.Element {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props
   return (
     <g>
@@ -134,6 +134,10 @@ export default function AdminReportPage(): React.JSX.Element {
   })
   const [activeGpaIndex, setActiveGpaIndex] = useState<number>(0)
   const [activeWarningIndex, setActiveWarningIndex] = useState<number>(0)
+
+  // PieChart onMouseEnter handlers — must match recharts Pie overload signature
+  const handleGpaEnter = (_data: unknown, idx: number): void => { setActiveGpaIndex(idx) }
+  const handleWarningEnter = (_data: unknown, idx: number): void => { setActiveWarningIndex(idx) }
 
   const { data: schoolYears = [] } = useQuery<SchoolYearItem[]>({
     queryKey: ['school-years-dropdown'], staleTime: 5 * 60 * 1000,
@@ -152,7 +156,7 @@ export default function AdminReportPage(): React.JSX.Element {
   const { data: majors = [] } = useQuery<MajorItem[]>({
     queryKey: ['majors-dropdown', filters.facultyId], staleTime: 5 * 60 * 1000,
     enabled: !!filters.facultyId,
-    queryFn: () => lookupApi.getMajors(filters.facultyId).then((r: any) => {
+    queryFn: () => lookupApi.getMajors(Number(filters.facultyId) || undefined).then((r: any) => {
       const d = r.data
       return (Array.isArray(d) ? d : (d?.data || d?.items || [])) as MajorItem[]
     }),
@@ -160,7 +164,7 @@ export default function AdminReportPage(): React.JSX.Element {
 
   const { data: reports = {}, isLoading, refetch } = useQuery<AdminReportsResponse>({
     queryKey: ['admin-reports', filters],
-    queryFn: () => reportApi.getAdminReports(filters).then((r: any) => {
+    queryFn: () => reportApi.getAdminReports(filters as unknown as Record<string, unknown>).then((r: any) => {
       const d = r.data
       return (d?.data || d || {}) as AdminReportsResponse
     }),
@@ -339,15 +343,13 @@ export default function AdminReportPage(): React.JSX.Element {
                     <ResponsiveContainer width="100%" height={250}>
                       <PieChart>
                         <Pie
-                          activeIndex={activeGpaIndex}
-                          activeShape={renderActiveShape}
                           data={gpaData}
                           cx="50%"
                           cy="50%"
                           innerRadius={50}
                           outerRadius={90}
                           dataKey="value"
-                          onMouseEnter={(_, idx) => setActiveGpaIndex(idx)}
+                          onMouseEnter={handleGpaEnter}
                         >
                           {gpaData.map((entry, idx) => (
                             <Cell key={idx} fill={entry.color} />
@@ -372,15 +374,13 @@ export default function AdminReportPage(): React.JSX.Element {
                     <ResponsiveContainer width="100%" height={250}>
                       <PieChart>
                         <Pie
-                          activeIndex={activeWarningIndex}
-                          activeShape={renderActiveShape}
                           data={warningData}
                           cx="50%"
                           cy="50%"
                           innerRadius={50}
                           outerRadius={90}
                           dataKey="value"
-                          onMouseEnter={(_, idx) => setActiveWarningIndex(idx)}
+                          onMouseEnter={handleWarningEnter}
                         >
                           {warningData.map((entry, idx) => (
                             <Cell key={idx} fill={entry.color} />

@@ -103,10 +103,10 @@ export default function AdvisorManagePage(): React.JSX.Element {
     mutationFn: () => {
       if (!advisorForm.fullName || !advisorForm.email || !advisorForm.departmentId)
         throw new Error('Vui lòng điền đầy đủ thông tin bắt buộc')
-      const payload: AdvisorFormState = { ...advisorForm, departmentId: advisorForm.departmentId }
+      const payload = { ...advisorForm, departmentId: Number(advisorForm.departmentId) || 0 }
       return editingAdvisor
-        ? advisorApi.update(editingAdvisor.advisorId, payload)
-        : advisorApi.create(payload)
+        ? advisorApi.update(editingAdvisor.advisorId, payload as unknown as import('../../../types').AdvisorFormData)
+        : advisorApi.create(payload as unknown as import('../../../types').AdvisorFormData)
     },
     onSuccess: () => {
       toast.success('Lưu cố vấn thành công!')
@@ -142,7 +142,7 @@ export default function AdvisorManagePage(): React.JSX.Element {
 
   // Assign students mutation
   const assignMutation = useMutation<unknown, ApiError, AssignStudentsPayload>({
-    mutationFn: ({ advisorId, studentIds }: AssignStudentsPayload) => advisorApi.assignStudents(advisorId, studentIds),
+    mutationFn: ({ advisorId, studentIds }: AssignStudentsPayload) => advisorApi.assignStudents(advisorId, studentIds as unknown as number[]),
     onSuccess: () => {
       toast.success('Phân sinh viên thành công!')
       setShowAssignModal(false)

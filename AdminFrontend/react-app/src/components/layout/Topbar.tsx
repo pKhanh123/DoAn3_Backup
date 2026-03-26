@@ -1,4 +1,5 @@
 import NotificationBell from '../common/NotificationBell'
+import { useAuth } from '../../contexts/AuthContext'
 import '../../assets/css/main.css'
 
 const ROLE_DISPLAY: Record<string, string> = {
@@ -20,8 +21,8 @@ export default function Topbar({
   // Lấy user từ AuthContext
   let user: { fullName?: string; userName?: string; role?: string; avatarUrl?: string } | null = null
   try {
-    const { useAuth } = require('../../contexts/AuthContext')
-    user = useAuth?.()?.user ?? null
+    const auth = useAuth()
+    user = auth?.user ?? null
   } catch {
     user = null
   }
@@ -68,8 +69,8 @@ export default function Topbar({
           <button
             onClick={() => {
               try {
-                const { useAuth } = require('../../contexts/AuthContext')
-                useAuth?.()?.logout()
+                const auth = useAuth()
+                auth?.logout()
               } catch { /* ignore */ }
             }}
             className="btn btn-outline btn-logout"
@@ -102,8 +103,8 @@ export default function Topbar({
         <button
           onClick={() => {
             try {
-              const { useAuth } = require('../../contexts/AuthContext')
-              useAuth?.()?.logout()
+              const auth = useAuth()
+              auth?.logout()
             } catch { /* ignore */ }
           }}
           className="btn btn-outline btn-logout-mobile"

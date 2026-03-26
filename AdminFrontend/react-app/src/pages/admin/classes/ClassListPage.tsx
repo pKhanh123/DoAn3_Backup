@@ -153,8 +153,8 @@ export default function ClassListPage(): React.JSX.Element {
     mutationFn: () => {
       const payload = { ...form, maxStudents: Number(form.maxStudents) || 50 }
       return editingClass
-        ? classApi.update(editingClass.classId, payload)
-        : classApi.create(payload)
+        ? classApi.update(editingClass.classId, payload as unknown as import('../../../types').ClassFormData)
+        : classApi.create(payload as unknown as import('../../../types').ClassFormData)
     },
     onSuccess: () => {
       toast.success(`${editingClass ? 'Cập nhật' : 'Tạo'} lớp học thành công!`)
