@@ -19,9 +19,10 @@ export default function Topbar({
   pageTitle?: string
 }) {
   // Lấy user từ AuthContext
+  let auth: ReturnType<typeof useAuth> | null = null
   let user: { fullName?: string; userName?: string; role?: string; avatarUrl?: string } | null = null
   try {
-    const auth = useAuth()
+    auth = useAuth()
     user = auth?.user ?? null
   } catch {
     user = null
@@ -67,12 +68,7 @@ export default function Topbar({
           </div>
 
           <button
-            onClick={() => {
-              try {
-                const auth = useAuth()
-                auth?.logout()
-              } catch { /* ignore */ }
-            }}
+            onClick={() => auth?.logout()}
             className="btn btn-outline btn-logout"
             aria-label="Đăng xuất"
           >
@@ -101,12 +97,7 @@ export default function Topbar({
           </div>
         </div>
         <button
-          onClick={() => {
-            try {
-              const auth = useAuth()
-              auth?.logout()
-            } catch { /* ignore */ }
-          }}
+          onClick={() => auth?.logout()}
           className="btn btn-outline btn-logout-mobile"
           aria-label="Đăng xuất"
         >

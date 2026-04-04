@@ -124,7 +124,17 @@ export default function UserFormPage(): React.JSX.Element {
   // Fetch roles
   const { data: roles = [] } = useQuery<Role[]>({
     queryKey: ['roles'],
-    queryFn: () => userApi.getRoles().then((r) => r.data),
+    queryFn: () =>
+      userApi.getRoles().then((r) => {
+        const d = r.data as unknown
+        // Handle both direct array and wrapped { data: [...] } response
+        if (Array.isArray(d)) return d
+        if (typeof d === 'object' && d !== null && 'data' in d) {
+          const wrapped = d as { data: unknown }
+          return Array.isArray(wrapped.data) ? wrapped.data : []
+        }
+        return []
+      }),
     staleTime: 5 * 60 * 1000,
   })
 
